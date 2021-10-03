@@ -1,18 +1,18 @@
 module.exports = {
-  BAD_REQUEST(message = "Bad Request") {
+  badRequest(res, message = 'Bad Request') {
     const statusCode = 400;
-    const error = "Bad Request";
-    return { statusCode, error, message };
+    const error = 'Bad Request';
+    res.status(statusCode).send({statusCode, error, message});
   },
 
-  UNAUTHORIED(message = "Unauthoried") {
+  unauthoried(res, message = 'Unauthoried') {
     const statusCode = 401;
-    const error = "Unauthoried";
-    return { statusCode, error, message };
+    const error = 'Unauthoried';
+    res.status(statusCode).send({statusCode, error, message});
   },
-  NOT_FOUND(message = "Not Found") {
+  notFound(res, message = 'Not Found') {
     const statusCode = 404;
-    const error = "Not Found";
-    return { statusCode, error, message };
+    const error = 'Not Found';
+    res.status(statusCode).send({statusCode, error, message});
   },
 };
