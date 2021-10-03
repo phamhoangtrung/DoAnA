@@ -1,15 +1,15 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const itemFacade = require("./facade");
+const itemFacade = require('./facade');
 
-router.get("/", itemFacade.all);
+router.get('/', itemFacade.all);
 
-router.get("/:id", itemFacade.one);
+router.get('/:id', itemFacade.one);
 
-router.post("/", itemFacade.add);
+router.post('/', itemFacade.add);
 
-router.put("/:id", itemFacade.update);
+router.put('/:id', itemFacade.update);
 
-router.delete("/:id", itemFacade.delete);
+router.delete('/:id', itemFacade.delete);
 
 module.exports = router;

@@ -6,4 +6,4 @@ const ItemSchema = mongoose.Schema({
   //   createDate: Date,
   //   updateDate: Date,
 });
-module.exports = mongoose.model("Item", ItemSchema);
+module.exports = mongoose.model("Cart", ItemSchema);

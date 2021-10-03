@@ -1,15 +1,18 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const cartFacade = require("./facade");
+const cartFacade = require('./facade');
+const {authMiddleware} = require('../../shared/middleware/auth');
 
-router.get("/", cartFacade.all);
+router.use(authMiddleware);
 
-router.get("/:id", cartFacade.one);
+router.get('/', cartFacade.all);
 
-router.post("/", cartFacade.add);
+router.get('/:id', cartFacade.one);
 
-router.put("/:id", cartFacade.update);
+router.post('/', cartFacade.add);
 
-router.delete("/:id", cartFacade.delete);
+router.put('/:id', cartFacade.update);
+
+router.delete('/:id', cartFacade.delete);
 
 module.exports = router;

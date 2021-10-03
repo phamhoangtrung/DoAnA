@@ -1,8 +1,8 @@
-const User = require("./schema");
-const { validateRegist, validateLogin } = require("./validator");
-const errorFactory = require("../../shared/error/error");
-const bcryptjs = require("bcryptjs");
-const jwt = require("jsonwebtoken");
+const User = require('./schema');
+const {validateRegist, validateLogin} = require('./validator');
+const {badRequest} = require('../../shared/error/error');
+const bcryptjs = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
 module.exports = {
   async all(req, res) {
@@ -10,60 +10,49 @@ module.exports = {
       const users = await User.find();
       res.send(users);
     } catch (err) {
-      const error = errorFactory.BAD_REQUEST(err.message);
-      res.status(error.statusCode).send(error);
+      badRequest(res, err.message);
     }
   },
 
-  async one({ params: { id } }, res) {
+  async one({params: {id}}, res) {
     try {
       const User = await User.findById(id);
       res.send(User);
     } catch (err) {
-      const error = errorFactory.BAD_REQUEST(err.message);
-      res.status(error.statusCode).send(error);
+      badRequest(res, err.message);
     }
   },
 
-  async update({ body, params }, res) {
+  async update({body, params}, res) {
     try {
       const id = params.id;
       const User = await User.findOneAndUpdate(id, body);
       res.send(User);
     } catch (err) {
-      const error = errorFactory.BAD_REQUEST(err.message);
-      res.status(error.statusCode).send(error);
+      badRequest(res, err.message);
     }
   },
 
-  async delete({ params }, res) {
+  async delete({params}, res) {
     try {
       const id = params.id;
       const users = await User.findByIdAndDelete(id);
       res.send(users);
     } catch (err) {
-      const error = errorFactory.BAD_REQUEST(err.message);
-      res.status(error.statusCode).send(error);
+      badRequest(res, err.message);
     }
   },
 
-  async regist({ body }, res) {
+  async regist({body}, res) {
     try {
       // Validate required body
       const validUser = validateRegist(body);
-      if (validUser.error) {
-        const { message } = validUser.error.details[0];
-        const error = errorFactory.BAD_REQUEST(message);
-        return res.status(error.statusCode).send(error);
-      }
+      if (validUser.error) badRequest(res, validUser.error.details[0].message);
 
       // Validate email exist in DB
-      const query = { email: body.email };
+      const query = {email: body.email};
       const emailExist = await User.findOne(query);
-      if (emailExist) {
-        const error = errorFactory.BAD_REQUEST("Email already exist");
-        return res.status(error.statusCode).send(error);
-      }
+      if (emailExist) return badRequest(res, 'Email already exist');
 
       // Hashing password
       const hashPassword = await bcryptjs.hash(body.password, 10);
@@ -71,45 +60,33 @@ module.exports = {
       const users = await User.create(body);
       res.send(users);
     } catch (err) {
-      const error = errorFactory.BAD_REQUEST(err.message);
-      res.status(error.statusCode).send(error);
+      badRequest(res, err.message);
     }
   },
 
-  async login({ body }, res) {
+  async login({body}, res) {
     try {
-      const validUser = valiDateLogin(body);
+      const validUser = validateLogin(body);
       // Validate required body
-      if (validUser.error) {
-        const { message } = validUser.error.details[0];
-        const error = errorFactory.BAD_REQUEST(message);
-        return res.status(error.statusCode).send(error);
-      }
+      if (validUser.error) badRequest(res, validUser.error.details[0].message);
 
       // Validate email exist in DB
-      const query = { email: body.email };
+      const query = {email: body.email};
       const user = await User.findOne(query);
-      if (!user) {
-        const error = errorFactory.BAD_REQUEST("Invalid email");
-        return res.status(error.statusCode).send(error);
-      }
+      if (!user) return badRequest(res, 'Invalid email');
 
       // Validate password
       const vailidPassword = await bcryptjs.compare(
         body.password,
         user.password
       );
-      if (!vailidPassword) {
-        const error = errorFactory.BAD_REQUEST("Invalid password");
-        return res.status(error.statusCode).send(error);
-      }
+      if (!vailidPassword) return badRequest(res, 'Invalid password');
 
       // Generate JWT
-      const token = jwt.sign({ id: user._id }, process.env.API_TOKEN);
+      const token = jwt.sign({id: user._id}, process.env.API_TOKEN);
       res.send(token);
     } catch (err) {
-      const error = errorFactory.BAD_REQUEST(err.message);
-      res.status(error.statusCode).send(error);
+      badRequest(res);
     }
   },
 };

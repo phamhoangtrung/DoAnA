@@ -2,14 +2,19 @@ const express = require("express");
 const app = express();
 const mongoose = require("mongoose");
 
-const itemRoute = require("./api/item/routes");
-const userRoute = require("./api/user/routes");
+const ItemRoute = require("./api/item/routes");
+const UserRoute = require("./api/user/routes");
+const CartRoute = require("./api/cart/routes");
+
 
 require("dotenv/config");
 
 app.use(express.json());
-app.use("/api/v1/item", itemRoute);
-app.use("/api/v1/user", userRoute);
+app.use("/api/v1/item", ItemRoute);
+app.use("/api/v1/user", UserRoute);
+app.use("/api/v1/cart", CartRoute);
+
+
 
 const port = 3000;
 
