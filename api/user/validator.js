@@ -1,16 +1,17 @@
 const Joi = require("joi");
+const { minmax } = require("../../shared/joi/get-validator");
 
 const validateRegist = (body) => {
   const schema = Joi.object({
-    name: Joi.string().required().min(5).max(30),
+    name: minmax(),
     email: Joi.string().required().email(),
-    password: Joi.string().required().min(5).max(1024),
+    password: minmax({ max: 1024 }),
     dob: Joi.date(),
     address: {
-      city: Joi.string().required().min(5).max(30),
-      addr: Joi.string().required().min(5).max(30),
-      ward: Joi.string().required().min(5).max(30),
-      district: Joi.string().required().min(5).max(30),
+      city: minmax(),
+      addr: minmax(),
+      ward: minmax(),
+      district: minmax(),
     },
     phone: Joi.string()
       .required()

@@ -1,92 +1,100 @@
-const User = require('./schema');
-const {validateRegist, validateLogin} = require('./validator');
-const {badRequest} = require('../../shared/error/error');
-const bcryptjs = require('bcryptjs');
-const jwt = require('jsonwebtoken');
+const User = require("./schema");
+const bcryptjs = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+
+const { validateRegist, validateLogin } = require("./validator");
+const { HTTP401Error } = require("../../shared/error/api-error");
+const { getJoiErrorMessage } = require("../../shared/joi/get-error");
+const req = require("express/lib/request");
+
+const genToken = (id) => jwt.sign({ id }, process.env.API_TOKEN);
 
 module.exports = {
-  async all(req, res) {
+  async all(req, res, next) {
     try {
-      const users = await User.find();
-      res.send(users);
+      req.data = await User.find();
+      next();
     } catch (err) {
-      badRequest(res, err.message);
+      next(err);
     }
   },
 
-  async one({params: {id}}, res) {
+  async one({ params: { id } }, res, next) {
     try {
-      const User = await User.findById(id);
-      res.send(User);
+      req.data = await User.findById(id);
+      next();
     } catch (err) {
-      badRequest(res, err.message);
+      next(err);
     }
   },
 
-  async update({body, params}, res) {
+  async update({ body, params: { id } }, res, next) {
     try {
-      const id = params.id;
-      const User = await User.findOneAndUpdate(id, body);
-      res.send(User);
+      await User.findOneAndUpdate(id, body);
+      next();
     } catch (err) {
-      badRequest(res, err.message);
+      next(err);
     }
   },
 
-  async delete({params}, res) {
+  async delete({ params: id }, res, next) {
     try {
-      const id = params.id;
-      const users = await User.findByIdAndDelete(id);
-      res.send(users);
+      await User.findByIdAndDelete(id);
+      next();
     } catch (err) {
-      badRequest(res, err.message);
+      next(err);
     }
   },
 
-  async regist({body}, res) {
+  async regist({ body }, res, next) {
     try {
       // Validate required body
       const validUser = validateRegist(body);
-      if (validUser.error) badRequest(res, validUser.error.details[0].message);
+      if (validUser.error)
+        throw new HTTP401Error(getJoiErrorMessage(validUser));
 
       // Validate email exist in DB
-      const query = {email: body.email};
+      const query = { email: body.email };
       const emailExist = await User.findOne(query);
-      if (emailExist) return badRequest(res, 'Email already exist');
+      if (emailExist) throw new HTTP401Error("Email already exist");
 
       // Hashing password
       const hashPassword = await bcryptjs.hash(body.password, 10);
       body.password = hashPassword;
-      const users = await User.create(body);
-      res.send(users);
+      const user = await User.create(body);
+      const token = genToken(user._id);
+      req.data = token;
+      next();
     } catch (err) {
-      badRequest(res, err.message);
+      next(err);
     }
   },
 
-  async login({body}, res) {
+  async login({ body }, res, next) {
     try {
       const validUser = validateLogin(body);
       // Validate required body
-      if (validUser.error) badRequest(res, validUser.error.details[0].message);
+      if (validUser.error)
+        throw new HTTP401Error(getJoiErrorMessage(validUser));
 
       // Validate email exist in DB
-      const query = {email: body.email};
+      const query = { email: body.email };
       const user = await User.findOne(query);
-      if (!user) return badRequest(res, 'Invalid email');
+      if (!user) throw new HTTP401Error("Invalid email");
 
       // Validate password
       const vailidPassword = await bcryptjs.compare(
         body.password,
         user.password
       );
-      if (!vailidPassword) return badRequest(res, 'Invalid password');
+      if (!vailidPassword) throw new HTTP401Error("Invalid password");
 
       // Generate JWT
-      const token = jwt.sign({id: user._id}, process.env.API_TOKEN);
-      res.send(token);
+      const token = genToken(user._id);
+      req.data = token;
+      next();
     } catch (err) {
-      badRequest(res);
+      next(err);
     }
   },
 };
