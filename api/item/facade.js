@@ -1,51 +1,72 @@
-const Item = require('./schema');
-const {} = require('./validator');
-const {badRequest} = require('../../shared/error/error');
+const Item = require("./schema");
+const { validate } = require("./validator");
+const {
+  HTTP404Error,
+  HTTP400Error,
+  HTTP401Error,
+} = require("../../shared/error/api-error");
+const { getJoiErrorMessage } = require("../../shared/joi/get-error");
+const req = require("express/lib/request");
+
 module.exports = {
-  async all(req, res) {
+  async all(req, res, next) {
     try {
       const items = await Item.find();
-      res.send(items);
+      req.data = items;
+      next();
     } catch (err) {
-      badRequest(res);
+      next(err);
     }
   },
 
-  async one({params: {id}}, res) {
+  async one({ params: { id } }, res, next) {
     try {
       const item = await Item.findById(id);
-      res.send(item);
+      if (!item) throw new HTTP400Error("No Item Founded");
+      req.data = item;
+      next();
     } catch (err) {
-      badRequest(res);
+      next(err);
     }
   },
 
-  async update({body, params}, res) {
+  async update({ body, params: { id } }, res, next) {
     try {
-      const id = params.id;
-      const item = await Item.findOneAndUpdate(id, body);
-      res.send(item);
+      if (!id) throw new HTTP400Error("No Parameter");
+
+      const validatedBody = validate(body);
+      if (validatedBody.error)
+        throw new HTTP400Error(getJoiErrorMessage(validatedBody));
+
+      const item = await Item.findByIdAndUpdate(id, body);
+      req.data = item.id;
+      next();
     } catch (err) {
-      badRequest(res);
+      next(err);
     }
   },
 
-  async delete({params}, res) {
+  async delete({ params: { id } }, res, next) {
     try {
-      const id = params.id;
-      const items = await Item.findByIdAndDelete(id);
-      res.send(items);
+      const item = await Item.findByIdAndDelete(id);
+      req.data = item.id;
+      next();
     } catch (err) {
-      badRequest(res);
+      next(err);
     }
   },
 
-  async add({body}, res) {
+  async add({ body }, res, next) {
     try {
-      const items = await Item.create(body);
-      res.send(items);
+      const validatedBody = validate(body);
+      if (validatedBody.error)
+        throw new HTTP400Error(getJoiErrorMessage(validatedBody));
+
+      const item = await Item.create(body);
+      req.data = item.id;
+      next();
     } catch (err) {
-      badRequest(res);
+      next(err);
     }
   },
 };

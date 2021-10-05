@@ -1,52 +1,49 @@
-const Cart = require('./schema');
-const {} = require('./validator');
-const {badRequest} = require('../../shared/error/error');
+const Cart = require("./schema");
+const {} = require("./validator");
 
 module.exports = {
-  async all(req, res) {
+  async all(req, res, next) {
     try {
-      const carts = await Cart.find();
-      res.send(req.userInfo);
+      req.data = await Cart.find();
+      next();
     } catch (err) {
-      badRequest(res);
+      next(err);
     }
   },
 
-  async one({params: {id}}, res) {
+  async one({ params: { id } }, res) {
     try {
-      const cart = await Cart.findById(id);
-      res.send(cart);
+      req.data = await Cart.findById(id);
+      next();
     } catch (err) {
-      badRequest(res);
+      next(err);
     }
   },
 
-  async update({body, params}, res) {
+  async update({ body, params: { id } }, res) {
     try {
-      const id = params.id;
-      const cart = await Cart.findOneAndUpdate(id, body);
-      res.send(cart);
+      await Cart.findOneAndUpdate(id, body);
+      next();
     } catch (err) {
-      badRequest(res);
+      next(err);
     }
   },
 
-  async delete({params}, res) {
+  async delete({ params: { id } }, res) {
     try {
-      const id = params.id;
-      const cart = await Cart.findByIdAndDelete(id);
-      res.send(cart);
+      await Cart.findByIdAndDelete(id);
+      next();
     } catch (err) {
-      badRequest(res);
+      next(err);
     }
   },
 
-  async add({body}, res) {
+  async add({ body }, res) {
     try {
-      const cart = await Cart.create(body);
-      res.send(cart);
+      await Cart.create(body);
+      next();
     } catch (err) {
-      badRequest(res);
+      next(err);
     }
   },
 };
